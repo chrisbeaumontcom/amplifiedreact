@@ -1,26 +1,26 @@
 {
-    "dev": {
-        "awscloudformation": {
-            "AuthRoleName": "amplify-amplifiedreact-dev-162933-authRole",
-            "UnauthRoleArn": "arn:aws:iam::553786426355:role/amplify-amplifiedreact-dev-162933-unauthRole",
-            "AuthRoleArn": "arn:aws:iam::553786426355:role/amplify-amplifiedreact-dev-162933-authRole",
-            "Region": "us-west-2",
-            "DeploymentBucketName": "amplify-amplifiedreact-dev-162933-deployment",
-            "UnauthRoleName": "amplify-amplifiedreact-dev-162933-unauthRole",
-            "StackName": "amplify-amplifiedreact-dev-162933",
-            "StackId": "arn:aws:cloudformation:us-west-2:553786426355:stack/amplify-amplifiedreact-dev-162933/a2b93bc0-69ce-11eb-ad75-0633937de7fd",
-            "AmplifyAppId": "d27gt9dbl3nr8x"
-        },
-        "categories": {
-            "auth": {
-                "amplifiedreact1e01bae6": {}
-            },
-            "hosting": {
-                "amplifyhosting": {
-                    "appId": "d27gt9dbl3nr8x",
-                    "type": "manual"
-                }
-            }
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-amplifiedreact-dev-162933-authRole",
+      "UnauthRoleArn": "arn:aws:iam::553786426355:role/amplify-amplifiedreact-dev-162933-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::553786426355:role/amplify-amplifiedreact-dev-162933-authRole",
+      "Region": "us-west-2",
+      "DeploymentBucketName": "amplify-amplifiedreact-dev-162933-deployment",
+      "UnauthRoleName": "amplify-amplifiedreact-dev-162933-unauthRole",
+      "StackName": "amplify-amplifiedreact-dev-162933",
+      "StackId": "arn:aws:cloudformation:us-west-2:553786426355:stack/amplify-amplifiedreact-dev-162933/a2b93bc0-69ce-11eb-ad75-0633937de7fd",
+      "AmplifyAppId": "d27gt9dbl3nr8x"
+    },
+    "categories": {
+      "hosting": {
+        "amplifyhosting": {
+          "appId": "d27gt9dbl3nr8x",
+          "type": "manual"
         }
+      },
+      "auth": {
+        "amplifiedreactdee8c00d": {}
+      }
     }
+  }
 }

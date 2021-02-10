@@ -1,6 +1,6 @@
 {
   "api": {
-    "myapi": {
+    "amplifiedreact": {
       "service": "AppSync",
       "providerPlugin": "awscloudformation",
       "output": {
@@ -9,7 +9,7 @@
             "authenticationType": "API_KEY",
             "apiKeyConfig": {
               "apiKeyExpirationDays": 7,
-              "description": "demo"
+              "description": "demo2"
             }
           },
           "additionalAuthenticationProviders": []
@@ -18,7 +18,7 @@
     }
   },
   "auth": {
-    "amplifiedreact1e01bae6": {
+    "amplifiedreactdee8c00d": {
       "service": "Cognito",
       "providerPlugin": "awscloudformation",
       "dependsOn": [],
@@ -31,5 +31,6 @@
       "providerPlugin": "awscloudformation",
       "type": "manual"
     }
-  }
+  },
+  "storage": {}
 }
