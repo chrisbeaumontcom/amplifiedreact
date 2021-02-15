@@ -7,6 +7,7 @@ export const getTodo = /* GraphQL */ `
       id
       name
       description
+      image
       createdAt
       updatedAt
     }
@@ -23,6 +24,40 @@ export const listTodos = /* GraphQL */ `
         id
         name
         description
+        image
+        createdAt
+        updatedAt
+      }
+      nextToken
+    }
+  }
+`;
+export const getFilestore = /* GraphQL */ `
+  query GetFilestore($id: ID!) {
+    getFilestore(id: $id) {
+      id
+      name
+      description
+      filename
+      link
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const listFilestores = /* GraphQL */ `
+  query ListFilestores(
+    $filter: ModelFilestoreFilterInput
+    $limit: Int
+    $nextToken: String
+  ) {
+    listFilestores(filter: $filter, limit: $limit, nextToken: $nextToken) {
+      items {
+        id
+        name
+        description
+        filename
+        link
         createdAt
         updatedAt
       }

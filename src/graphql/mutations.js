@@ -10,6 +10,7 @@ export const createTodo = /* GraphQL */ `
       id
       name
       description
+      image
       createdAt
       updatedAt
     }
@@ -24,6 +25,7 @@ export const updateTodo = /* GraphQL */ `
       id
       name
       description
+      image
       createdAt
       updatedAt
     }
@@ -38,6 +40,55 @@ export const deleteTodo = /* GraphQL */ `
       id
       name
       description
+      image
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const createFilestore = /* GraphQL */ `
+  mutation CreateFilestore(
+    $input: CreateFilestoreInput!
+    $condition: ModelFilestoreConditionInput
+  ) {
+    createFilestore(input: $input, condition: $condition) {
+      id
+      name
+      description
+      filename
+      link
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const updateFilestore = /* GraphQL */ `
+  mutation UpdateFilestore(
+    $input: UpdateFilestoreInput!
+    $condition: ModelFilestoreConditionInput
+  ) {
+    updateFilestore(input: $input, condition: $condition) {
+      id
+      name
+      description
+      filename
+      link
+      createdAt
+      updatedAt
+    }
+  }
+`;
+export const deleteFilestore = /* GraphQL */ `
+  mutation DeleteFilestore(
+    $input: DeleteFilestoreInput!
+    $condition: ModelFilestoreConditionInput
+  ) {
+    deleteFilestore(input: $input, condition: $condition) {
+      id
+      name
+      description
+      filename
+      link
       createdAt
       updatedAt
     }

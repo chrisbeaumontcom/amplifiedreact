@@ -32,5 +32,10 @@
       "type": "manual"
     }
   },
-  "storage": {}
+  "storage": {
+    "amplifiedreactstore": {
+      "service": "S3",
+      "providerPlugin": "awscloudformation"
+    }
+  }
 }
