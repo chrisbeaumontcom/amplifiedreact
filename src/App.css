@@ -40,6 +40,9 @@ span.right-span {
   float: right;
   padding: 0;
 }
+span.filesize {
+  padding-left: 15px;
+}
 label.label {
   display: inline-block;
   width: 100px;

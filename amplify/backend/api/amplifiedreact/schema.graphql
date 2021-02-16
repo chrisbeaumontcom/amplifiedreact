@@ -4,4 +4,6 @@ type Filestore @model {
   description: String
   filename: String
   link: String
+  filesize: Int
+  owner: String
 }

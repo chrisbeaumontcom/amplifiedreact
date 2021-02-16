@@ -11,6 +11,7 @@ const App = () => {
   return (
     <div className="container">
       <h1>File Storage App</h1>
+
       <UploadFormList />
       <AmplifySignOut />
     </div>

@@ -1,49 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import Amplify, { API, Storage } from 'aws-amplify';
+import Amplify, { API, Storage, Auth } from 'aws-amplify';
 import { createFilestore, deleteFilestore } from '../graphql/mutations';
 import { listFilestores } from '../graphql/queries';
 import { slugify, formatBytes } from '../Utils/functions';
 import { bucketurl } from '../config.js';
-//import ListFiles from './ListFiles';
+import ListFiles from './ListFiles';
 
 import awsExports from '../aws-exports';
 Amplify.configure(awsExports);
 
 export default function UploadFormList() {
+  const [username, setUsername] = useState(null);
   const { register, handleSubmit, errors } = useForm();
   const [buttonState, setButtonState] = useState(false);
   const [recordsList, setRecordsList] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [filesList, setFilesList] = useState([]);
-  const [filesLoaded, setFilesLoaded] = useState(false);
 
   useEffect(() => {
-    listFiles();
+    getUser();
   }, []);
 
-  async function listFiles() {
-    try {
-      setFilesLoaded(false);
-      const result = await Storage.list('');
-      // console.log('List: ', result);
-      setFilesList(result);
-      setFilesLoaded(true);
-    } catch (err) {
-      console.log('error listing files:', err);
-    }
-  }
-
-  async function removeFile(key) {
-    try {
-      setFilesLoaded(false);
-      //const result =
-      await Storage.remove(key);
-      // console.log('Remove: ', result);
-      listFiles();
-    } catch (err) {
-      console.log('error listing files:', err);
-    }
+  async function getUser() {
+    // Optional, By default is false. If set to true, this call will send a request to Cognito to get the latest user data
+    Auth.currentAuthenticatedUser({ bypassCache: false })
+      .then((user) => {
+        //console.log(user);
+        const { username } = user;
+        setUsername(username);
+      })
+      .catch((err) => console.log(err));
   }
 
   useEffect(() => {
@@ -54,7 +40,10 @@ export default function UploadFormList() {
     setButtonState(true);
     setLoading(true);
     const file = data.uploadfile[0];
+    // console.log('File info:', file);
     if (!file) {
+      setButtonState(false);
+      setLoading(false);
       return;
     }
     const filename = slugify(file.name);
@@ -63,22 +52,24 @@ export default function UploadFormList() {
       description: data.description,
       filename: filename,
       link: bucketurl + filename,
+      owner: username,
+      filesize: file.size,
     };
-    //console.log(fileStoreObj);
+    // console.log(fileStoreObj);
     //const result =
     await Storage.put(filename, file);
-    //console.log('File upload:', result);
+    // console.log('File upload:', result);
     //const addresult =
     await API.graphql({
       query: createFilestore,
       variables: { input: fileStoreObj },
     });
-    //console.log('Add Result:', addresult);
+    //  console.log('Add Result:', addresult);
     e.target.reset();
     fetchRecords();
     setLoading(false);
     setButtonState(false);
-    listFiles();
+    //listFiles();
   };
 
   async function fetchRecords() {
@@ -94,6 +85,18 @@ export default function UploadFormList() {
       setLoading(false);
     } catch (err) {
       console.log('Error creating listing records:', err);
+    }
+  }
+
+  async function removeFile(key) {
+    try {
+      //setFilesLoaded(false);
+      //const result =
+      await Storage.remove(key);
+      // console.log('Remove: ', result);
+      //listFiles();
+    } catch (err) {
+      console.log('error listing files:', err);
     }
   }
 
@@ -120,6 +123,7 @@ export default function UploadFormList() {
 
   return (
     <div>
+      {username && <p>User: {username}</p>}
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label for="name" className="input-group-text label">
@@ -129,7 +133,7 @@ export default function UploadFormList() {
             name="name"
             ref={register({ required: true })}
             className="form-control"
-          />{' '}
+          />
           <div>{errors.name && <span>This field is required</span>}</div>
         </div>
 
@@ -164,18 +168,38 @@ export default function UploadFormList() {
         load={loading}
       />
       <div className="hr"></div>
-      <ListFiles
-        loaded={filesLoaded}
-        files={filesList}
-        list={listFiles}
-        remove={removeFile}
-      />
+      <ListFiles />
+      <div className="hr"></div>
     </div>
   );
 }
 
 // Display lists as their own components
 function ListRecords(props) {
+  function copyToClipboard(vlink, event) {
+    navigator.clipboard.writeText(vlink).then(
+      function () {
+        //setCopySuccess('Link to doc copied!');
+        event.target.textContent = 'Copied!';
+        //console.log(event.target);
+      },
+      function () {
+        //setCopySuccess('Link copy failed.');
+      }
+    );
+  }
+
+  const copybutStyle = {
+    backgroundColor: '#0066ff',
+    color: '#ffffff',
+    padding: '2px 5px',
+    margin: '0 10px',
+    borderRadius: 5,
+    outline: 'none',
+    border: 'none',
+    fontSize: 12,
+  };
+
   return (
     <>
       <h2>Records:</h2>
@@ -198,6 +222,23 @@ function ListRecords(props) {
             {item.filename && (
               <p>
                 <a href={item.link}>{item.filename}</a>
+                <button
+                  onClick={(e) => copyToClipboard(item.link, e)}
+                  style={copybutStyle}
+                >
+                  Copy Link
+                </button>
+
+                <br />
+                <small>
+                  {item.filesize && (
+                    <span className="filesize">
+                      {formatBytes(item.filesize)}
+                    </span>
+                  )}{' '}
+                  Last modified: {new Date(item.updatedAt).toLocaleString()} by{' '}
+                  {item.owner}
+                </small>
               </p>
             )}
           </div>
@@ -206,46 +247,72 @@ function ListRecords(props) {
   );
 }
 
-function ListFiles(props) {
-  return (
-    <>
-      <h2>
-        Files:
-        <span className="right-span">
-          <button
-            className="action"
-            onClick={() => {
-              props.list();
-            }}
-          >
-            Update
-          </button>
-        </span>
-      </h2>
-      <p>This section is just for bucket management during dev.</p>
-      {!props.loaded && <div className="loader">Loading file list...</div>}
+/* 
+  const [filesList, setFilesList] = useState([]);
+  const [filesLoaded, setFilesLoaded] = useState(false);
+  <ListFiles
+  loaded={filesLoaded}
+  files={filesList}
+  list={listFiles}
+  remove={removeFile}
+  /> 
 
-      {props.loaded &&
-        props.files.map((fileObj) => (
-          <p key={fileObj.key}>
-            <a
-              href={bucketurl + fileObj.key}
-              rel="noreferrer noopener"
-              target="_blank"
-            >
-              {fileObj.key}
-            </a>
-            <span className="right-span">
-              {formatBytes(fileObj.size)}{' '}
-              <button
-                onClick={() => props.remove(fileObj.key)}
-                className="btn-primary"
-              >
-                Remove
-              </button>
-            </span>
-          </p>
-        ))}
-    </>
-  );
-}
+  async function listFiles() {
+    try {
+      setFilesLoaded(false);
+      const result = await Storage.list('');
+      // console.log('List: ', result);
+      setFilesList(result);
+      setFilesLoaded(true);
+    } catch (err) {
+      console.log('error listing files:', err);
+    }
+  }
+
+
+
+*/
+
+// function ListFiles(props) {
+//   return (
+//     <>
+//       <h2>
+//         Files:
+//         <span className="right-span">
+//           <button
+//             className="action"
+//             onClick={() => {
+//               props.list();
+//             }}
+//           >
+//             Update
+//           </button>
+//         </span>
+//       </h2>
+//       <p>This section is just for bucket management during dev.</p>
+//       {!props.loaded && <div className="loader">Loading file list...</div>}
+
+//       {props.loaded &&
+//         props.files.map((fileObj) => (
+//           <p key={fileObj.key}>
+//             <a
+//               href={bucketurl + fileObj.key}
+//               rel="noreferrer noopener"
+//               target="_blank"
+//             >
+//               {fileObj.key}
+//             </a>
+//             <span className="right-span">
+//               {formatBytes(fileObj.size)}{' '}
+//               <button
+//                 onClick={() => props.remove(fileObj.key)}
+//                 className="btn-primary"
+//               >
+//                 Remove
+//               </button>
+//             </span>
+//           </p>
+//         ))}
+//     </>
+//   );
+// }

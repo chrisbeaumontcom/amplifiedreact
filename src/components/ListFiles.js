@@ -51,6 +51,7 @@ export default function ListFiles() {
           </button>
         </span>
       </h2>
+      <p>This section is just for bucket management during dev.</p>
       {!loaded && <div className="loader">Loading file list...</div>}
 
       {loaded &&
@@ -63,8 +64,8 @@ export default function ListFiles() {
             >
               {fileObj.key}
             </a>
+            <span className="filesize">[{formatBytes(fileObj.size)}]</span>
             <span className="right-span">
-              {formatBytes(fileObj.size)}{' '}
               <button
                 onClick={() => removeFile(fileObj.key)}
                 className="btn-primary"
