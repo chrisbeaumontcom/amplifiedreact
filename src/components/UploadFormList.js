@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useReducer } from 'react';
 import { useForm } from 'react-hook-form';
 import Amplify, { API, Storage, Auth } from 'aws-amplify';
 import { createFilestore, deleteFilestore } from '../graphql/mutations';
@@ -10,12 +10,35 @@ import ListFiles from './ListFiles';
 import awsExports from '../aws-exports';
 Amplify.configure(awsExports);
 
+const initialState = {
+  username: '',
+  recordsList: [],
+  loading: false,
+  buttonState: false,
+};
+
+const reducer = (state, action) => {
+  switch (action.type) {
+    case 'setUsername':
+      return { ...state, username: action.payload };
+    case 'setRecordsList':
+      return { ...state, recordsList: action.payload };
+    case 'setLoading':
+      return { ...state, loading: action.payload };
+    case 'setButtonState':
+      return { ...state, buttonState: action.payload };
+    default:
+      return state;
+  }
+};
+
 export default function UploadFormList() {
-  const [username, setUsername] = useState(null);
   const { register, handleSubmit, errors } = useForm();
-  const [buttonState, setButtonState] = useState(false);
-  const [recordsList, setRecordsList] = useState([]);
-  const [loading, setLoading] = useState(false);
+  // const [username, setUsername] = useState('');
+  // const [buttonState, setButtonState] = useState(false);
+  // const [recordsList, setRecordsList] = useState([]);
+  // const [loading, setLoading] = useState(false);
+  const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
     getUser();
@@ -25,9 +48,9 @@ export default function UploadFormList() {
     // Optional, By default is false. If set to true, this call will send a request to Cognito to get the latest user data
     Auth.currentAuthenticatedUser({ bypassCache: false })
       .then((user) => {
-        //console.log(user);
         const { username } = user;
-        setUsername(username);
+        dispatch({ type: 'setUsername', payload: username });
+        //setUsername(username);
       })
       .catch((err) => console.log(err));
   }
@@ -37,13 +60,17 @@ export default function UploadFormList() {
   }, []);
 
   const onSubmit = async (data, e) => {
-    setButtonState(true);
-    setLoading(true);
+    dispatch({ type: 'setButtonState', payload: true });
+    // setButtonState(true);
+    dispatch({ type: 'setLoading', payload: true });
+    // setLoading(true);
     const file = data.uploadfile[0];
     // console.log('File info:', file);
     if (!file) {
-      setButtonState(false);
-      setLoading(false);
+      dispatch({ type: 'setButtonState', payload: false });
+      // setButtonState(false);
+      dispatch({ type: 'setLoading', payload: false });
+      // setLoading(false);
       return;
     }
     const filename = slugify(file.name);
@@ -52,7 +79,7 @@ export default function UploadFormList() {
       description: data.description,
       filename: filename,
       link: bucketurl + filename,
-      owner: username,
+      owner: state.username,
       filesize: file.size,
     };
     // console.log(fileStoreObj);
@@ -67,22 +94,27 @@ export default function UploadFormList() {
     //  console.log('Add Result:', addresult);
     e.target.reset();
     fetchRecords();
-    setLoading(false);
-    setButtonState(false);
+    dispatch({ type: 'setLoading', payload: false });
+    // setLoading(false);
+    dispatch({ type: 'setButtonState', payload: false });
+    // setButtonState(false);
     //listFiles();
   };
 
   async function fetchRecords() {
     try {
-      setLoading(true);
+      dispatch({ type: 'setLoading', payload: true });
+      // setLoading(true);
       const apiData = await API.graphql({ query: listFilestores });
       const fileStoreFromAPI = apiData.data.listFilestores.items;
       const sortedRecords = fileStoreFromAPI.sort((a, b) => {
         return Date.parse(b.createdAt) - Date.parse(a.createdAt);
       });
       // console.log('Records:', fileStoreFromAPI);
-      setRecordsList(sortedRecords);
-      setLoading(false);
+      dispatch({ type: 'setRecordsList', payload: sortedRecords });
+      // setRecordsList(sortedRecords);
+      dispatch({ type: 'setLoading', payload: false });
+      // setLoading(false);
     } catch (err) {
       console.log('Error creating listing records:', err);
     }
@@ -102,7 +134,8 @@ export default function UploadFormList() {
 
   async function removeFilestore(key) {
     try {
-      setLoading(true);
+      dispatch({ type: 'setLoading', payload: true });
+      // setLoading(true);
       const fileStore = {
         id: key,
       };
@@ -123,7 +156,8 @@ export default function UploadFormList() {
 
   return (
     <div>
-      {username && <p>User: {username}</p>}
+      {state.username && <p>User: {state.username}</p>}
+
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>
           <label for="name" className="input-group-text label">
@@ -156,16 +190,26 @@ export default function UploadFormList() {
         </div>
 
         <div>
-          <button type="submit" className="action" disabled={buttonState}>
+          <button type="submit" className="action" disabled={state.buttonState}>
             Add File
           </button>
         </div>
       </form>
       <div className="hr"></div>
+      <span className="right-span">
+        <button
+          className="action"
+          onClick={() => {
+            fetchRecords();
+          }}
+        >
+          Refresh
+        </button>
+      </span>
       <ListRecords
-        records={recordsList}
+        records={state.recordsList}
         remove={removeFilestore}
-        load={loading}
+        load={state.loading}
       />
       <div className="hr"></div>
       <ListFiles />
@@ -174,17 +218,15 @@ export default function UploadFormList() {
   );
 }
 
-// Display lists as their own components
+// Display list as its own component
 function ListRecords(props) {
   function copyToClipboard(vlink, event) {
     navigator.clipboard.writeText(vlink).then(
       function () {
-        //setCopySuccess('Link to doc copied!');
         event.target.textContent = 'Copied!';
-        //console.log(event.target);
       },
       function () {
-        //setCopySuccess('Link copy failed.');
+        event.target.textContent = 'Failed to copy';
       }
     );
   }

@@ -17,7 +17,6 @@ export default function ListFiles() {
     try {
       setLoaded(false);
       const result = await Storage.list('');
-      // console.log('List: ', result);
       setFilesList(result);
       setLoaded(true);
     } catch (err) {
@@ -47,7 +46,7 @@ export default function ListFiles() {
               listFiles();
             }}
           >
-            Update
+            Refresh
           </button>
         </span>
       </h2>
