@@ -34,10 +34,6 @@ const reducer = (state, action) => {
 
 export default function UploadFormList() {
   const { register, handleSubmit, errors } = useForm();
-  // const [username, setUsername] = useState('');
-  // const [buttonState, setButtonState] = useState(false);
-  // const [recordsList, setRecordsList] = useState([]);
-  // const [loading, setLoading] = useState(false);
   const [state, dispatch] = useReducer(reducer, initialState);
 
   useEffect(() => {
@@ -50,7 +46,6 @@ export default function UploadFormList() {
       .then((user) => {
         const { username } = user;
         dispatch({ type: 'setUsername', payload: username });
-        //setUsername(username);
       })
       .catch((err) => console.log(err));
   }
@@ -61,16 +56,11 @@ export default function UploadFormList() {
 
   const onSubmit = async (data, e) => {
     dispatch({ type: 'setButtonState', payload: true });
-    // setButtonState(true);
     dispatch({ type: 'setLoading', payload: true });
-    // setLoading(true);
     const file = data.uploadfile[0];
-    // console.log('File info:', file);
     if (!file) {
       dispatch({ type: 'setButtonState', payload: false });
-      // setButtonState(false);
       dispatch({ type: 'setLoading', payload: false });
-      // setLoading(false);
       return;
     }
     const filename = slugify(file.name);
@@ -82,39 +72,29 @@ export default function UploadFormList() {
       owner: state.username,
       filesize: file.size,
     };
-    // console.log(fileStoreObj);
     //const result =
     await Storage.put(filename, file);
-    // console.log('File upload:', result);
     //const addresult =
     await API.graphql({
       query: createFilestore,
       variables: { input: fileStoreObj },
     });
-    //  console.log('Add Result:', addresult);
     e.target.reset();
     fetchRecords();
     dispatch({ type: 'setLoading', payload: false });
-    // setLoading(false);
     dispatch({ type: 'setButtonState', payload: false });
-    // setButtonState(false);
-    //listFiles();
   };
 
   async function fetchRecords() {
     try {
       dispatch({ type: 'setLoading', payload: true });
-      // setLoading(true);
       const apiData = await API.graphql({ query: listFilestores });
       const fileStoreFromAPI = apiData.data.listFilestores.items;
       const sortedRecords = fileStoreFromAPI.sort((a, b) => {
         return Date.parse(b.createdAt) - Date.parse(a.createdAt);
       });
-      // console.log('Records:', fileStoreFromAPI);
       dispatch({ type: 'setRecordsList', payload: sortedRecords });
-      // setRecordsList(sortedRecords);
       dispatch({ type: 'setLoading', payload: false });
-      // setLoading(false);
     } catch (err) {
       console.log('Error creating listing records:', err);
     }
@@ -122,11 +102,8 @@ export default function UploadFormList() {
 
   async function removeFile(key) {
     try {
-      //setFilesLoaded(false);
       //const result =
       await Storage.remove(key);
-      // console.log('Remove: ', result);
-      //listFiles();
     } catch (err) {
       console.log('error listing files:', err);
     }
@@ -135,7 +112,6 @@ export default function UploadFormList() {
   async function removeFilestore(key) {
     try {
       dispatch({ type: 'setLoading', payload: true });
-      // setLoading(true);
       const fileStore = {
         id: key,
       };
@@ -147,7 +123,6 @@ export default function UploadFormList() {
       if (keyForS3File) {
         removeFile(keyForS3File);
       }
-      //console.log('Del FileStore: ', result);
       fetchRecords();
     } catch (err) {
       console.log('error deleting filestore:', err);
@@ -288,73 +263,3 @@ function ListRecords(props) {
     </>
   );
 }
-
-/* 
-  const [filesList, setFilesList] = useState([]);
-  const [filesLoaded, setFilesLoaded] = useState(false);
-  <ListFiles
-  loaded={filesLoaded}
-  files={filesList}
-  list={listFiles}
-  remove={removeFile}
-  /> 
-
-  async function listFiles() {
-    try {
-      setFilesLoaded(false);
-      const result = await Storage.list('');
-      // console.log('List: ', result);
-      setFilesList(result);
-      setFilesLoaded(true);
-    } catch (err) {
-      console.log('error listing files:', err);
-    }
-  }
-
-
-
-*/
-
-// function ListFiles(props) {
-//   return (
-//     <>
-//       <h2>
-//         Files:
-//         <span className="right-span">
-//           <button
-//             className="action"
-//             onClick={() => {
-//               props.list();
-//             }}
-//           >
-//             Update
-//           </button>
-//         </span>
-//       </h2>
-//       <p>This section is just for bucket management during dev.</p>
-//       {!props.loaded && <div className="loader">Loading file list...</div>}
-
-//       {props.loaded &&
-//         props.files.map((fileObj) => (
-//           <p key={fileObj.key}>
-//             <a
-//               href={bucketurl + fileObj.key}
-//               rel="noreferrer noopener"
-//               target="_blank"
-//             >
-//               {fileObj.key}
-//             </a>
-//             <span className="right-span">
-//               {formatBytes(fileObj.size)}{' '}
-//               <button
-//                 onClick={() => props.remove(fileObj.key)}
-//                 className="btn-primary"
-//               >
-//                 Remove
-//               </button>
-//             </span>
-//           </p>
-//         ))}
-//     </>
-//   );
-// }
