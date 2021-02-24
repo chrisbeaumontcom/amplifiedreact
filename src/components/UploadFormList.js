@@ -1,4 +1,4 @@
-import React, { useEffect, useReducer } from 'react';
+import React, { useEffect, useReducer, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import Amplify, { API, Storage, Auth } from 'aws-amplify';
 import { createFilestore, deleteFilestore } from '../graphql/mutations';
@@ -6,6 +6,7 @@ import { listFilestores } from '../graphql/queries';
 import { slugify, formatBytes } from '../Utils/functions';
 import { bucketurl } from '../config.js';
 import ListFiles from './ListFiles';
+import ProgressBar from './ProgressBar';
 
 import awsExports from '../aws-exports';
 Amplify.configure(awsExports);
@@ -15,6 +16,7 @@ const initialState = {
   recordsList: [],
   loading: false,
   buttonState: false,
+  errorMessage: '',
 };
 
 const reducer = (state, action) => {
@@ -27,6 +29,10 @@ const reducer = (state, action) => {
       return { ...state, loading: action.payload };
     case 'setButtonState':
       return { ...state, buttonState: action.payload };
+    case 'setErrorMessage':
+      return { ...state, errorMessage: action.payload };
+    // case 'setProgress':
+    //     return { ...state, progress: action.payload };
     default:
       return state;
   }
@@ -35,6 +41,7 @@ const reducer = (state, action) => {
 export default function UploadFormList() {
   const { register, handleSubmit, errors } = useForm();
   const [state, dispatch] = useReducer(reducer, initialState);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     getUser();
@@ -73,7 +80,12 @@ export default function UploadFormList() {
       filesize: file.size,
     };
     //const result =
-    await Storage.put(filename, file);
+    await Storage.put(filename, file, {
+      contentType: file.type,
+      progressCallback(progress) {
+        setProgress(Math.round((progress.loaded / progress.total) * 100));
+      },
+    });
     //const addresult =
     await API.graphql({
       query: createFilestore,
@@ -89,6 +101,7 @@ export default function UploadFormList() {
     try {
       dispatch({ type: 'setLoading', payload: true });
       const apiData = await API.graphql({ query: listFilestores });
+      // console.log('Test API:', apiData);
       const fileStoreFromAPI = apiData.data.listFilestores.items;
       const sortedRecords = fileStoreFromAPI.sort((a, b) => {
         return Date.parse(b.createdAt) - Date.parse(a.createdAt);
@@ -97,6 +110,10 @@ export default function UploadFormList() {
       dispatch({ type: 'setLoading', payload: false });
     } catch (err) {
       console.log('Error creating listing records:', err);
+      dispatch({
+        type: 'setErrorMessage',
+        payload: 'Error listing records: ' + err?.errors[0]?.message,
+      });
     }
   }
 
@@ -129,9 +146,13 @@ export default function UploadFormList() {
     }
   }
 
+  function resetProgress() {
+    setProgress(0);
+  }
+
   return (
     <div>
-      {state.username && <p>User: {state.username}</p>}
+      {state.username && <p className="right">User: {state.username}</p>}
 
       <form onSubmit={handleSubmit(onSubmit)}>
         <div>
@@ -158,12 +179,16 @@ export default function UploadFormList() {
             name="uploadfile"
             ref={register({ required: true })}
             className="form-control"
+            onClick={() => {
+              resetProgress();
+            }}
           />
           <div>
             {errors.uploadfile && <span>A selected file is required</span>}
           </div>
         </div>
-
+        {progress > 0 && <ProgressBar progress={progress} />}
+        {progress === 100 && <p>Done!</p>}
         <div>
           <button type="submit" className="action" disabled={state.buttonState}>
             Add File
@@ -181,11 +206,16 @@ export default function UploadFormList() {
           Refresh
         </button>
       </span>
-      <ListRecords
-        records={state.recordsList}
-        remove={removeFilestore}
-        load={state.loading}
-      />
+      {state.recordsList.length === 0 && state.errorMessage && (
+        <p>{state.errorMessage}</p>
+      )}
+      {state.recordsList.length > 0 && (
+        <ListRecords
+          records={state.recordsList}
+          remove={removeFilestore}
+          load={state.loading}
+        />
+      )}
       <div className="hr"></div>
       <ListFiles />
       <div className="hr"></div>

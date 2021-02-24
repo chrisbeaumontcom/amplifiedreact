@@ -27,8 +27,9 @@ export default function ListFiles() {
   async function removeFile(key) {
     try {
       setLoaded(false);
-      const result = await Storage.remove(key);
-      console.log('Remove: ', result);
+      //const result =
+      await Storage.remove(key);
+      // console.log('Remove: ', result);
       listFiles();
     } catch (err) {
       console.log('error listing files:', err);

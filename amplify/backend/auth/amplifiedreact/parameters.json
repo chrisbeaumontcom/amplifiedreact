@@ -1,8 +1,8 @@
 {
-    "identityPoolName": "amplifiedreactdee8c00d_identitypool_dee8c00d",
-    "allowUnauthenticatedIdentities": true,
-    "resourceNameTruncated": "amplifdee8c00d",
-    "userPoolName": "amplifiedreactdee8c00d_userpool_dee8c00d",
+    "identityPoolName": "testAuthIdentityPool",
+    "allowUnauthenticatedIdentities": false,
+    "resourceNameTruncated": "amplifbbc00db7",
+    "userPoolName": "amplifiedreact",
     "autoVerifiedAttributes": [
         "email"
     ],
@@ -18,20 +18,17 @@
     "passwordPolicyMinLength": 8,
     "passwordPolicyCharacters": [],
     "requiredAttributes": [
+        "preferred_username",
         "email"
     ],
-    "userpoolClientGenerateSecret": true,
+    "userpoolClientGenerateSecret": false,
     "userpoolClientRefreshTokenValidity": 30,
-    "userpoolClientWriteAttributes": [
-        "email"
-    ],
-    "userpoolClientReadAttributes": [
-        "email"
-    ],
-    "userpoolClientLambdaRole": "amplifdee8c00d_userpoolclient_lambda_role",
+    "userpoolClientWriteAttributes": [],
+    "userpoolClientReadAttributes": [],
+    "userpoolClientLambdaRole": "amplifbbc00db7_userpoolclient_lambda_role",
     "userpoolClientSetAttributes": false,
-    "sharedId": "dee8c00d",
-    "resourceName": "amplifiedreactdee8c00d",
+    "sharedId": "bbc00db7",
+    "resourceName": "amplifiedreact",
     "authSelections": "identityPoolAndUserPool",
     "authRoleArn": {
         "Fn::GetAtt": [
@@ -45,9 +42,13 @@
             "Arn"
         ]
     },
-    "useDefault": "default",
-    "userPoolGroupList": [],
     "serviceName": "Cognito",
+    "useDefault": "manual",
+    "userPoolGroups": false,
+    "userPoolGroupList": [],
+    "adminQueries": false,
+    "thirdPartyAuth": false,
+    "authProviders": [],
     "usernameCaseSensitive": false,
     "dependsOn": []
 }

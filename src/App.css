@@ -36,6 +36,9 @@ p {
   margin: 0;
   margin-bottom: 5px;
 }
+.right {
+  text-align: right;
+}
 span.right-span {
   float: right;
   padding: 0;
