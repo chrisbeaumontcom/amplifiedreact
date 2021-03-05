@@ -94,6 +94,9 @@ input.form-control {
   padding: 8px;
   font-size: 18px;
 }
+.error {
+  color: red;
+}
 /*
 @keyframes App-logo-spin {
   from {

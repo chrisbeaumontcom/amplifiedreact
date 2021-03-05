@@ -4,7 +4,6 @@ import Amplify, { API, Storage, Auth } from 'aws-amplify';
 import { createFilestore, deleteFilestore } from '../graphql/mutations';
 import { listFilestores } from '../graphql/queries';
 import { slugify, formatBytes } from '../Utils/functions';
-import { bucketurl } from '../config.js';
 import ListFiles from './ListFiles';
 import ProgressBar from './ProgressBar';
 
@@ -71,22 +70,28 @@ export default function UploadFormList() {
       return;
     }
     const filename = slugify(file.name);
-    const fileStoreObj = {
-      name: data.name,
-      description: data.description,
-      filename: filename,
-      link: bucketurl + filename,
-      owner: state.username,
-      filesize: file.size,
-    };
-    //const result =
+
+    // Store file // const result =
     await Storage.put(filename, file, {
       contentType: file.type,
       progressCallback(progress) {
         setProgress(Math.round((progress.loaded / progress.total) * 100));
       },
     });
-    //const addresult =
+    // Get presigned URL of the file //
+    const presignedURL = await Storage.get(filename);
+
+    // Store data about file
+    const fileStoreObj = {
+      name: data.name,
+      description: data.description,
+      filename: filename,
+      link: presignedURL,
+      owner: state.username,
+      filesize: file.size,
+    };
+
+    // const addresult =
     await API.graphql({
       query: createFilestore,
       variables: { input: fileStoreObj },
@@ -106,7 +111,12 @@ export default function UploadFormList() {
       const sortedRecords = fileStoreFromAPI.sort((a, b) => {
         return Date.parse(b.createdAt) - Date.parse(a.createdAt);
       });
-      dispatch({ type: 'setRecordsList', payload: sortedRecords });
+      // Add link copy state
+      const updatedRecords = sortedRecords.map((record) => {
+        return { ...record, copied: false };
+      });
+
+      dispatch({ type: 'setRecordsList', payload: updatedRecords });
       dispatch({ type: 'setLoading', payload: false });
     } catch (err) {
       console.log('Error creating listing records:', err);
@@ -117,9 +127,26 @@ export default function UploadFormList() {
     }
   }
 
+  function handleCopyLink(id, link) {
+    copyToClipboard(link);
+    const updatedRecords = state.recordsList.map((record) => {
+      if (record.id === id) {
+        return { ...record, copied: true };
+      }
+      return { ...record, copied: false };
+    });
+    dispatch({ type: 'setRecordsList', payload: updatedRecords });
+  }
+  async function copyToClipboard(textToCopy) {
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
   async function removeFile(key) {
     try {
-      //const result =
       await Storage.remove(key);
     } catch (err) {
       console.log('error listing files:', err);
@@ -164,7 +191,9 @@ export default function UploadFormList() {
             ref={register({ required: true })}
             className="form-control"
           />
-          <div>{errors.name && <span>This field is required</span>}</div>
+          <div className="error">
+            {errors.name && <span>This field is required</span>}
+          </div>
         </div>
 
         <div>
@@ -183,7 +212,7 @@ export default function UploadFormList() {
               resetProgress();
             }}
           />
-          <div>
+          <div className="error">
             {errors.uploadfile && <span>A selected file is required</span>}
           </div>
         </div>
@@ -214,6 +243,7 @@ export default function UploadFormList() {
           records={state.recordsList}
           remove={removeFilestore}
           load={state.loading}
+          copyLink={handleCopyLink}
         />
       )}
       <div className="hr"></div>
@@ -225,17 +255,6 @@ export default function UploadFormList() {
 
 // Display list as its own component
 function ListRecords(props) {
-  function copyToClipboard(vlink, event) {
-    navigator.clipboard.writeText(vlink).then(
-      function () {
-        event.target.textContent = 'Copied!';
-      },
-      function () {
-        event.target.textContent = 'Failed to copy';
-      }
-    );
-  }
-
   const copybutStyle = {
     backgroundColor: '#0066ff',
     color: '#ffffff',
@@ -269,13 +288,15 @@ function ListRecords(props) {
             {item.filename && (
               <p>
                 <a href={item.link}>{item.filename}</a>
+
                 <button
-                  onClick={(e) => copyToClipboard(item.link, e)}
+                  onClick={() => {
+                    props.copyLink(item.id, item.link);
+                  }}
                   style={copybutStyle}
                 >
-                  Copy Link
+                  {item.copied ? 'Copied!' : 'Copy link'}
                 </button>
-
                 <br />
                 <small>
                   {item.filesize && (

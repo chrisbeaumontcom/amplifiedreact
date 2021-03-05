@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Amplify, { Storage } from 'aws-amplify';
 import { formatBytes } from '../Utils/functions';
-import { bucketurl } from '../config.js';
 import awsExports from '../aws-exports';
 Amplify.configure(awsExports);
 
@@ -57,13 +56,7 @@ export default function ListFiles() {
       {loaded &&
         filesList.map((fileObj) => (
           <p key={fileObj.key}>
-            <a
-              href={bucketurl + fileObj.key}
-              rel="noreferrer noopener"
-              target="_blank"
-            >
-              {fileObj.key}
-            </a>
+            {fileObj.key}
             <span className="filesize">[{formatBytes(fileObj.size)}]</span>
             <span className="right-span">
               <button
